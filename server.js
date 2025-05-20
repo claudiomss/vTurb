@@ -88,6 +88,77 @@ app.post("/analytics", async (req, res) => {
   }
 })
 
+app.post("/rates_early", async (req, res) => {
+  const { start_date, end_date, player_id } = req.body
+
+  if (!start_date || !end_date || !player_id) {
+    return res
+      .status(400)
+      .json({ error: "start_date, end_date e player_id são obrigatórios" })
+  }
+
+  const fullStart = `${start_date} 00:00:01`
+  const fullEnd = `${end_date} 23:59:59`
+
+  const bodyBase = {
+    start_date: fullStart,
+    end_date: fullEnd,
+    player_id,
+    field: "country",
+    video_duration: 3600,
+    timezone: "America/Sao_Paulo",
+    pitch_time: 1800,
+  }
+
+  try {
+    // Fetch evasao
+    const evasaoRes = await fetch("https://www.descobre.app:443/evasao", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...bodyBase, values: ["United States"] }),
+    })
+
+    const evasaoData = await evasaoRes.json()
+
+    // Fetch analytics
+    const analyticsRes = await fetch("https://www.descobre.app:443/analytics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bodyBase),
+    })
+
+    const analyticsData = await analyticsRes.json()
+
+    const groupedValues = evasaoData[0]?.grouped_values || []
+    const startCount = analyticsData.start || 0
+
+    const lead_1min = groupedValues
+      .filter((entry) => entry.timed <= 60)
+      .reduce((acc, curr) => acc + curr.total_users, 0)
+
+    const lead_2min = groupedValues
+      .filter((entry) => entry.timed <= 120)
+      .reduce((acc, curr) => acc + curr.total_users, 0)
+
+    const lead_1min_rate = startCount
+      ? ((lead_1min / startCount) * 100).toFixed(2)
+      : 0
+    const lead_2min_rate = startCount
+      ? ((lead_2min / startCount) * 100).toFixed(2)
+      : 0
+
+    res.json({
+      lead_1min_rate: parseFloat(lead_1min_rate),
+      lead_2min_rate: parseFloat(lead_2min_rate),
+    })
+  } catch (error) {
+    console.error("Erro na rota /rates_early:", error.message)
+    res
+      .status(500)
+      .json({ error: "Erro ao calcular taxas", details: error.message })
+  }
+})
+
 https.createServer(options, app).listen(443, () => {
   console.log("Servidor rodando em https://descobre.app")
 })
