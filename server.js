@@ -167,7 +167,7 @@ app.get("/lista-vturb", async (req, res) => {
   })
 
   const SHEET_ID = "16h0GnsFjsli6HjVCD7aM1NZPkzG74C0O32IQIGLU2a4"
-  const RANGE = "Página1!A2:D"
+  const RANGE = "Página1!A2:E"
 
   try {
     const client = await auth.getClient()
@@ -185,11 +185,12 @@ app.get("/lista-vturb", async (req, res) => {
     }
 
     // Mapear para objetos
-    const dados = rows.map(([nicho, id_video, nome, pitch]) => ({
+    const dados = rows.map(([nicho, id_video, nome, pitch, oferta]) => ({
       nicho,
       id_video,
       nome,
       pitch,
+      oferta,
     }))
 
     res.json(dados)
