@@ -75,6 +75,7 @@ app.post("/analytics", async (req, res) => {
           checkout: pais.total_clicked_device_uniq,
           pitch_unid: pais.total_over_pitch,
           pitch_taxa: pais.over_pitch_rate,
+          total_finished: pais.total_finished_device_uniq,
           conversao: pais.total_conversions,
           conv_rate: pais.overall_conversion_rate,
           amount: pais.total_amount_brl,
