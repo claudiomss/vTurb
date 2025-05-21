@@ -159,6 +159,45 @@ app.post("/rates_early", async (req, res) => {
   }
 })
 
+app.get("/lista-vturb", async (req, res) => {
+  const auth = new google.auth.GoogleAuth({
+    keyFile: "service.json",
+    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+  })
+
+  const SHEET_ID = "16h0GnsFjsli6HjVCD7aM1NZPkzG74C0O32IQIGLU2a4"
+  const RANGE = "Página1!A2:D"
+
+  try {
+    const client = await auth.getClient()
+    const sheets = google.sheets({ version: "v4", auth: client })
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: RANGE,
+    })
+
+    const rows = response.data.values
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ message: "Nenhum dado encontrado." })
+    }
+
+    // Mapear para objetos
+    const dados = rows.map(([nicho, id_video, nome, pitch]) => ({
+      nicho,
+      id_video,
+      nome,
+      pitch,
+    }))
+
+    res.json(dados)
+  } catch (error) {
+    console.error("Erro ao buscar dados do Sheets:", error)
+    res.status(500).json({ error: "Erro interno ao buscar dados." })
+  }
+})
+
 https.createServer(options, app).listen(443, () => {
   console.log("Servidor rodando em https://descobre.app")
 })
